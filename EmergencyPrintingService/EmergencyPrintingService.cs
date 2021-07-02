@@ -9,7 +9,6 @@ using System.Net.Http;
 using System.IO;
 using System.Data.SqlClient;
 using Aspose.Pdf;
-using System.Reflection;
 
 namespace EmergencyPrintingService
 {
@@ -121,7 +120,7 @@ namespace EmergencyPrintingService
                 {
                     case 0:
                         {
-                            status = "a";
+                            status = "N";
                             eventLog1.WriteEntry("Flag found: " + status + " ; Ignoring...", EventLogEntryType.Warning, eventId++);
                             break;
                         }
@@ -159,7 +158,7 @@ namespace EmergencyPrintingService
                             {
 
                                 // Névlista létrehozása és nyomtatásra küldése
-                                Document document = new Document();
+                                Document document = new Document(); 
                                 Page page = document.Pages.Add();
                                 page.Paragraphs.Add(new Aspose.Pdf.Text.TextFragment("Bent tartózkodó személyek listája:"));
                                 page.Paragraphs.Add(new Aspose.Pdf.Text.TextFragment(DateTime.Now.ToString()));
@@ -204,7 +203,7 @@ namespace EmergencyPrintingService
                         }
                     case 2:
                         {
-                            // status változó nem tartalmaz sem "a"-t, sem "A"-t
+                            // status változó nem tartalmaz sem "N"-t, sem "A"-t
                             eventLog1.WriteEntry("Status couldn't be confirmed. Status='" + status + "' Skipping...", EventLogEntryType.Error, eventId++);
                             break;
                         }
@@ -231,7 +230,7 @@ namespace EmergencyPrintingService
 
         public int StatusCheck(string status)
         {
-            if (status.Contains("a"))
+            if (status.Contains("N"))
             {
                 return 0;
             }
