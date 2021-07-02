@@ -51,6 +51,9 @@ namespace EmergencyPrintingService
         private string sqlPassword = "";
         private string sqlTable = "";
         private string ignoreTimeAfterPrint = "600";
+        private string emergencyTrueFlag = "";
+        private string emergencyFalseFlag = "";
+        private string nameListSQLQuery = "";
 
         public EmergencyPrintingService()
         {
@@ -120,13 +123,13 @@ namespace EmergencyPrintingService
                 {
                     case 0:
                         {
-                            status = "N";
+                            status = emergencyFalseFlag;
                             eventLog1.WriteEntry("Flag found: " + status + " ; Ignoring...", EventLogEntryType.Warning, eventId++);
                             break;
                         }
                     case 1:
                         {
-                            status = "A";
+                            status = emergencyTrueFlag;
                             eventLog1.WriteEntry("Flag found: " + status + " ; Printing list of people... ", EventLogEntryType.Warning, eventId++);
 
                             int mode = 1;
@@ -166,7 +169,7 @@ namespace EmergencyPrintingService
                                 table.Border = new BorderInfo(BorderSide.All, .5f, Color.FromRgb(System.Drawing.Color.Black));
                                 table.DefaultCellBorder = new BorderInfo(BorderSide.All, .5f, Color.FromRgb(System.Drawing.Color.Black));
 
-                                String listQueryString = "SELECT teljes_nev FROM szemely sz JOIN szemely_mozgas szm ON szm.szemely_mozgas_id = sz.szemely_mozgas_fk WHERE  sz.statusz_fk = 13 AND aktiv_fl = 1 ORDER  BY teljes_nev ASC";
+                                String listQueryString = nameListSQLQuery;
                                 SqlCommand listCommand = new SqlCommand(listQueryString, connection);
                                 using (SqlDataReader listReader = listCommand.ExecuteReader())
                                 {
@@ -230,11 +233,11 @@ namespace EmergencyPrintingService
 
         public int StatusCheck(string status)
         {
-            if (status.Contains("N"))
+            if (status.Contains(emergencyFalseFlag))
             {
                 return 0;
             }
-            else if (status.Contains("A"))
+            else if (status.Contains(emergencyTrueFlag))
             {
                 return 1;
             }
@@ -267,6 +270,9 @@ namespace EmergencyPrintingService
                             case "PRINTER PATH": printerPath = appSettings[key]; break;
                             case "PDF LOCATION": pdfLocation = appSettings[key]; break;
                             case "IGNORETIME": ignoreTimeAfterPrint = appSettings[key]; break;
+                            case "EMERGENCY_TRUE_FLAG": emergencyTrueFlag = appSettings[key]; break;
+                            case "EMERGENCY_FALSE_FLAG": emergencyFalseFlag = appSettings[key]; break;
+                            case "NAME_LIST_SQL_QUERY": nameListSQLQuery = appSettings[key]; break;
                         }
                     }
                 }
