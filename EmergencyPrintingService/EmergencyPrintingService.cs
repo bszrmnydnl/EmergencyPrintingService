@@ -8,6 +8,8 @@ using System.Runtime.InteropServices;
 using System.Net.Http;
 using System.IO;
 using System.Data.SqlClient;
+using Aspose.Pdf;
+using System.Reflection;
 
 namespace EmergencyPrintingService
 {
@@ -38,7 +40,7 @@ namespace EmergencyPrintingService
     {
 
         [DllImport("advapi32.dll", SetLastError = true)]
-        private static extern bool SetServiceStatus(System.IntPtr handle, ref ServiceStatus serviceStatus);
+        private static extern bool SetServiceStatus(IntPtr handle, ref ServiceStatus serviceStatus);
         SqlConnection connection;
         private int eventId = 1;
         private int lastPrint = 0;
@@ -106,26 +108,32 @@ namespace EmergencyPrintingService
                 eventLog1.WriteEntry("Checking database for emergency flag...", EventLogEntryType.Information, eventId++);
                 String queryString = "SELECT status FROM " + sqlTable + " WHERE id=1";
                 SqlCommand command = new SqlCommand(queryString, connection);
+                String status = "";
                 using (SqlDataReader reader = command.ExecuteReader())
                 {
-                    String status = "";
                     while (reader.Read())
                     {
                         status = String.Format("{0}", reader["status"]);
                     }
+                }
 
-                    switch (StatusCheck(status))
-                    {
-                        case 0:
+                switch (StatusCheck(status))
+                {
+                    case 0:
+                        {
+                            status = "a";
+                            eventLog1.WriteEntry("Flag found: " + status + " ; Ignoring...", EventLogEntryType.Warning, eventId++);
+                            break;
+                        }
+                    case 1:
+                        {
+                            status = "A";
+                            eventLog1.WriteEntry("Flag found: " + status + " ; Printing list of people... ", EventLogEntryType.Warning, eventId++);
+
+                            int mode = 1;
+
+                            if (mode == 0)
                             {
-                                status = "a";
-                                eventLog1.WriteEntry("Flag found: " + status + " ; Ignoring...", EventLogEntryType.Warning, eventId++);
-                                break;
-                            }
-                        case 1:
-                            {
-                                status = "A";
-                                eventLog1.WriteEntry("Flag found: " + status + " ; Printing list of people... ", EventLogEntryType.Warning, eventId++);
 
                                 // Névlista PDF letöltése és nyomtatásra küldése
                                 using (var client = new System.Net.WebClient())
@@ -146,19 +154,62 @@ namespace EmergencyPrintingService
                                     }
                                 }
 
-                                // Névlista létrehozása és nyomtatásra küldése
-
-
-                                break;
                             }
-                        case 2:
+                            else if (mode == 1)
                             {
-                                // status változó nem tartalmaz sem "a"-t, sem "A"-t
-                                eventLog1.WriteEntry("Status couldn't be confirmed. Status='" + status + "' Skipping...", EventLogEntryType.Error, eventId++);
-                                break;
+
+                                // Névlista létrehozása és nyomtatásra küldése
+                                Document document = new Document();
+                                Page page = document.Pages.Add();
+                                page.Paragraphs.Add(new Aspose.Pdf.Text.TextFragment("Bent tartózkodó személyek listája:"));
+                                page.Paragraphs.Add(new Aspose.Pdf.Text.TextFragment(DateTime.Now.ToString()));
+                                Table table = new Table();
+                                table.Border = new BorderInfo(BorderSide.All, .5f, Color.FromRgb(System.Drawing.Color.Black));
+                                table.DefaultCellBorder = new BorderInfo(BorderSide.All, .5f, Color.FromRgb(System.Drawing.Color.Black));
+
+                                String listQueryString = "SELECT teljes_nev FROM szemely sz JOIN szemely_mozgas szm ON szm.szemely_mozgas_id = sz.szemely_mozgas_fk WHERE  sz.statusz_fk = 13 AND aktiv_fl = 1 ORDER  BY teljes_nev ASC";
+                                SqlCommand listCommand = new SqlCommand(listQueryString, connection);
+                                using (SqlDataReader listReader = listCommand.ExecuteReader())
+                                {
+                                    int row_count = 1;
+                                    while (listReader.Read())
+                                    {
+                                        Row row = table.Rows.Add();
+                                        row.Cells.Add("" + row_count);
+                                        row.Cells.Add(String.Format("{0}", listReader["teljes_nev"]));
+
+                                        row_count++;
+                                    }
+                                }
+
+                                document.Pages[1].Paragraphs.Add(table);
+                                document.Save("toPrint.pdf");
+
+                                FileStream pdfStream1 = File.OpenRead("toPrint.pdf");
+                                try
+                                {
+                                    lastPrint = GetTime();
+                                    // Névlista küldése nyomtatásra
+                                    _ = PrintPdf(pdfStream1, printerPath, "");
+                                    eventLog1.WriteEntry("Document successfully sent to printer. Going idle for " + Int32.Parse(ignoreTimeAfterPrint) / 60 + " minutes.", EventLogEntryType.Information, eventId++);
+                                }
+                                catch (InvalidOperationException ioe)
+                                {
+                                    eventLog1.WriteEntry(ioe.Message, EventLogEntryType.Error, eventId++);
+                                }
+
                             }
-                    }
+
+                            break;
+                        }
+                    case 2:
+                        {
+                            // status változó nem tartalmaz sem "a"-t, sem "A"-t
+                            eventLog1.WriteEntry("Status couldn't be confirmed. Status='" + status + "' Skipping...", EventLogEntryType.Error, eventId++);
+                            break;
+                        }
                 }
+
             }
         }
 
