@@ -45,11 +45,11 @@ namespace EmergencyPrintingService
         private int lastPrint = 0;
         private string printerPath = "";
         private string pdfLocation = "";
-        private string sqlServer = "79.139.58.214";
-        private string sqlDatabase = "porta_mylan";
-        private string sqlUser = "porta_mylan";
-        private string sqlPassword = "pxvtpZ9Ct493jkLf";
-        private string sqlTable = "pitoporta";
+        private string sqlServer = "";
+        private string sqlDatabase = "";
+        private string sqlUser = "";
+        private string sqlPassword = "";
+        private string sqlTable = "";
         private string ignoreTimeAfterPrint = "600";
 
         public EmergencyPrintingService()
