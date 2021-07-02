@@ -54,6 +54,7 @@ namespace EmergencyPrintingService
         private string emergencyTrueFlag = "";
         private string emergencyFalseFlag = "";
         private string nameListSQLQuery = "";
+        private string nameListMode = "";
 
         public EmergencyPrintingService()
         {
@@ -132,9 +133,7 @@ namespace EmergencyPrintingService
                             status = emergencyTrueFlag;
                             eventLog1.WriteEntry("Flag found: " + status + " ; Printing list of people... ", EventLogEntryType.Warning, eventId++);
 
-                            int mode = 1;
-
-                            if (mode == 0)
+                            if (nameListMode == "1")
                             {
 
                                 // Névlista PDF letöltése és nyomtatásra küldése
@@ -157,11 +156,11 @@ namespace EmergencyPrintingService
                                 }
 
                             }
-                            else if (mode == 1)
+                            else if (nameListMode == "0")
                             {
 
                                 // Névlista létrehozása és nyomtatásra küldése
-                                Document document = new Document(); 
+                                Document document = new Document();
                                 Page page = document.Pages.Add();
                                 page.Paragraphs.Add(new Aspose.Pdf.Text.TextFragment("Bent tartózkodó személyek listája:"));
                                 page.Paragraphs.Add(new Aspose.Pdf.Text.TextFragment(DateTime.Now.ToString()));
@@ -273,6 +272,7 @@ namespace EmergencyPrintingService
                             case "EMERGENCY_TRUE_FLAG": emergencyTrueFlag = appSettings[key]; break;
                             case "EMERGENCY_FALSE_FLAG": emergencyFalseFlag = appSettings[key]; break;
                             case "NAME_LIST_SQL_QUERY": nameListSQLQuery = appSettings[key]; break;
+                            case "NAME_LIST_MODE": nameListMode = appSettings[key]; break;
                         }
                     }
                 }
