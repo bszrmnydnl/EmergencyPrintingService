@@ -161,6 +161,8 @@ namespace EmergencyPrintingService
 
                                 // Névlista létrehozása és nyomtatásra küldése
                                 Document document = new Document();
+                                document.PageInfo.Height = PageSize.A4.Height;
+                                document.PageInfo.Width = PageSize.A4.Width;
                                 Page page = document.Pages.Add();
                                 page.Paragraphs.Add(new Aspose.Pdf.Text.TextFragment("Bent tartózkodó személyek listája:"));
                                 page.Paragraphs.Add(new Aspose.Pdf.Text.TextFragment(DateTime.Now.ToString()));
